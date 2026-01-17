@@ -124,13 +124,20 @@ export default function FoodDiary() {
   // -- NOTE --
   const handleNoteChange = (e) => { setNotes(e.target.value); updateDaily('notes', e.target.value); };
   
-  // MODIFICA QUI: Rimossa etichetta [NOTE]
   const addNoteToDiary = () => { 
       let text = summary;
-      if (text && !text.endsWith('\n')) text += '\n'; // Aggiungi a capo se serve
-      text += notes + '\n'; // Aggiungi solo il testo della nota
+      if (text && !text.endsWith('\n')) text += '\n'; 
+      text += notes + '\n'; 
       setSummary(text); 
       updateDaily('dailyDiary', text); 
+  };
+
+  // NUOVA FUNZIONE: CANCELLA NOTE
+  const clearNotes = () => {
+      if(confirm("Cancellare le note personali?")) {
+          setNotes("");
+          updateDaily('notes', "");
+      }
   };
   
   const copyToClipboard = () => { navigator.clipboard.writeText(summary); alert("Copiato!"); };
@@ -195,6 +202,11 @@ export default function FoodDiary() {
             <div style={{display:'flex', gap:10, marginTop:5}}>
                 <button onClick={addNoteToDiary} style={{background: '#f1c40f', color:'#333', fontSize:12}}>+ Al Diario</button>
                 <button onClick={() => { setNewName("Nota"); setNewDesc(notes); setShowDbManager(true); document.getElementById('addForm').scrollIntoView(); }} style={{background: 'var(--primary)', fontSize:12}}>+ Crea DB</button>
+                
+                {/* TASTO CANCELLA NOTE AGGIUNTO */}
+                <button onClick={clearNotes} style={{background: 'var(--border)', color:'#555', width:'auto', padding:'0 10px'}} title="Cancella note">
+                    <Trash2 size={14}/>
+                </button>
             </div>
         </div>
       </div>
@@ -206,7 +218,6 @@ export default function FoodDiary() {
       {showDbManager && (
         <div className="section" style={{background:'var(--bg-color)', padding:15, borderRadius:10, marginTop:10}}>
             
-            {/* FORM DI AGGIUNTA/MODIFICA */}
             <h4 style={{margin:'0 0 10px 0', color:'var(--text-main)'}}>
                 {editingId ? "Modifica Alimento" : "Aggiungi Nuovo"}
             </h4>
@@ -245,6 +256,7 @@ export default function FoodDiary() {
                         </div>
                     </div>
                 ))}
+                {filteredDbList.length === 0 && <p style={{textAlign:'center', fontSize:12, color:'#999'}}>Nessun alimento trovato.</p>}
             </div>
             
             <button onClick={resetInitialDb} style={{background:'var(--border)', color:'#333', fontSize:11, marginTop:20}}>⚠️ Carica DB Base (Emergenza)</button>
