@@ -17,7 +17,7 @@ export default function History() {
     return () => unsub();
   }, []);
 
-  // Ascolta Dati Attuali per l'archiviazione
+  // Ascolta Dati Attuali
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "settings", "daily"), (snap) => {
         if(snap.exists()) {
@@ -39,7 +39,7 @@ export default function History() {
             meals: currentDiary || "Nessun pasto registrato"
         });
 
-        // Resetta SOLO il diario, NON l'acqua
+        // Resetta SOLO il diario
         await updateDoc(doc(db, "settings", "daily"), { dailyDiary: "" });
         alert("Archiviato con successo!");
     }
@@ -50,9 +50,10 @@ export default function History() {
   };
 
   const copyEntry = (entry) => {
-    const text = `DATA: ${entry.date}\nACQUA: ${entry.water}ml\n\n--- PASTI ---\n${entry.meals}`;
+    // MODIFICA: Rimossa la data dall'intestazione, lasciato solo il contenuto utile
+    const text = `ACQUA: ${entry.water}ml\n\n--- PASTI ---\n${entry.meals}`;
     navigator.clipboard.writeText(text);
-    alert("Scheda copiata!");
+    alert("Scheda copiata (senza data)!");
   };
 
   return (
@@ -63,7 +64,6 @@ export default function History() {
             <button onClick={archiveDay} style={{background: 'var(--history-purple)', display:'flex', alignItems:'center', justifyContent:'center', gap:10}}>
                 <Archive size={18}/> Salva e Chiudi Giornata
             </button>
-            <p style={{fontSize:11, color:'#777', textAlign:'center', marginTop:5}}>Salva il diario nello storico e lo pulisce. L'acqua rimane.</p>
         </div>
 
         <div>
