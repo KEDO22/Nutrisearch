@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, addDoc, doc, deleteDoc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, addDoc, doc, deleteDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { Search, Plus, Trash2, Copy, Save, RotateCcw } from 'lucide-react';
+import { Search, Plus, Trash2, Copy, Save, Edit2 } from 'lucide-react';
 
 const INITIAL_DB = [
     { name: "Yogurt Soia Bianco (Primia)", desc: "125g | 85 kcal, 3.6g Pro" },
     { name: "Mela", desc: "52 kcal/100g" },
     { name: "Pollo Petto", desc: "165 kcal/100g, 31g Pro" },
-    { name: "Riso Basmati", desc: "360 kcal/100g" },
-    // ... puoi aggiungere qui la tua lista lunga iniziale se vuoi ripristinarla
+    // ...
 ];
 
 export default function FoodDiary() {
@@ -27,7 +26,9 @@ export default function FoodDiary() {
   const [notes, setNotes] = useState("");
   const [showDbManager, setShowDbManager] = useState(false);
 
-  // New DB Item inputs
+  // DB Manager Inputs
+  const [dbSearch, setDbSearch] = useState(""); // Ricerca nel DB Manager
+  const [editingId, setEditingId] = useState(null); // ID dell'elemento in modifica
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
 
@@ -53,7 +54,7 @@ export default function FoodDiary() {
     return () => unsub();
   }, []);
 
-  // -- LOGICA RICERCA --
+  // -- LOGICA RICERCA DIARIO --
   const handleSearch = (e) => {
     const val = e.target.value;
     setSearchTerm(val);
@@ -68,32 +69,49 @@ export default function FoodDiary() {
     setSuggestions([]);
   };
 
-  // -- AGGIORNAMENTO DATI CLOUD --
   const updateDaily = async (field, value) => {
     const docRef = doc(db, "settings", "daily");
-    try {
-      await setDoc(docRef, { [field]: value }, { merge: true });
-    } catch (e) { console.error("Errore salvataggio", e); }
+    try { await setDoc(docRef, { [field]: value }, { merge: true }); } catch (e) {}
   };
 
   const addToSummary = () => {
     if (!selectedFood) return;
     let text = summary;
     if (!text.includes(`[${meal}]`)) text += (text ? "\n\n" : "") + `[${meal}]\n`;
-    text += `• ${qty ? qty + unit + ' di ' : ''}${selectedFood.name} | ${selectedFood.desc}\n`;
+    text += `• ${qty ? qty + ' ' + unit + ' di ' : ''}${selectedFood.name} | ${selectedFood.desc}\n`;
     
     setSummary(text);
     updateDaily('dailyDiary', text);
-    setSearchTerm("");
-    setSelectedFood(null);
-    setQty("");
+    setSearchTerm(""); setSelectedFood(null); setQty("");
   };
 
-  // -- DB MANAGEMENT --
-  const saveToDb = async () => {
+  // -- DB MANAGEMENT (Modifica e Ricerca) --
+  const handleSaveToDb = async () => {
     if (!newName || !newDesc) return alert("Compila i campi");
-    await addDoc(collection(db, "foods"), { name: newName, desc: newDesc });
-    setNewName(""); setNewDesc(""); alert("Salvato!");
+    
+    if (editingId) {
+        // MODIFICA
+        await updateDoc(doc(db, "foods", editingId), { name: newName, desc: newDesc });
+        alert("Alimento aggiornato!");
+        setEditingId(null);
+    } else {
+        // NUOVO
+        await addDoc(collection(db, "foods"), { name: newName, desc: newDesc });
+        alert("Salvato!");
+    }
+    setNewName(""); setNewDesc(""); 
+  };
+
+  const startEdit = (food) => {
+      setNewName(food.name);
+      setNewDesc(food.desc);
+      setEditingId(food.id);
+      // Scroll to form (opzionale)
+      document.getElementById('addForm').scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+      setNewName(""); setNewDesc(""); setEditingId(null);
   };
 
   const deleteFromDb = async (id) => {
@@ -101,41 +119,23 @@ export default function FoodDiary() {
   };
 
   const resetInitialDb = async () => {
-    if(!confirm("Questo caricherà i dati base nel Cloud. Procedere?")) return;
-    INITIAL_DB.forEach(async (item) => {
-       await addDoc(collection(db, "foods"), item);
-    });
+    if(!confirm("Caricare DB base?")) return;
+    INITIAL_DB.forEach(async (item) => await addDoc(collection(db, "foods"), item));
   };
+
+  // Filtro lista DB per la gestione
+  const filteredDbList = foodDb.filter(f => f.name.toLowerCase().includes(dbSearch.toLowerCase()));
 
   // -- NOTE --
-  const handleNoteChange = (e) => {
-    setNotes(e.target.value);
-    updateDaily('notes', e.target.value); // Salvataggio live
-  };
-
-  const addNoteToDiary = () => {
-    let text = summary + `\n[NOTE]: ${notes}\n`;
-    setSummary(text);
-    updateDaily('dailyDiary', text);
-  };
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(summary);
-    alert("Copiato!");
-  };
-
-  const clearDiary = () => {
-    if(confirm("Svuotare il diario?")) {
-        setSummary("");
-        updateDaily('dailyDiary', "");
-    }
-  };
+  const handleNoteChange = (e) => { setNotes(e.target.value); updateDaily('notes', e.target.value); };
+  const addNoteToDiary = () => { setSummary(summary + `\n[NOTE]: ${notes}\n`); updateDaily('dailyDiary', summary + `\n[NOTE]: ${notes}\n`); };
+  const copyToClipboard = () => { navigator.clipboard.writeText(summary); alert("Copiato!"); };
+  const clearDiary = () => { if(confirm("Svuotare?")) { setSummary(""); updateDaily('dailyDiary', ""); } };
 
   return (
     <div className="fade-in">
       <h1>NutriSearch 🍎</h1>
 
-      {/* SELEZIONE PASTO */}
       <div className="section">
         <select value={meal} onChange={(e) => setMeal(e.target.value)} className="meal-selector">
           <option value="COLAZIONE">☕ Colazione</option>
@@ -145,20 +145,12 @@ export default function FoodDiary() {
         </select>
       </div>
 
-      {/* RICERCA */}
       <div className="section" style={{position: 'relative'}}>
-        <input 
-          type="text" 
-          placeholder="Cerca alimento..." 
-          value={searchTerm}
-          onChange={handleSearch}
-        />
+        <input type="text" placeholder="Cerca alimento..." value={searchTerm} onChange={handleSearch} />
         {suggestions.length > 0 && (
           <div id="suggestions" style={{display:'block'}}>
             {suggestions.map(f => (
-              <div key={f.id} className="suggestion-item" onClick={() => selectFood(f)}>
-                {f.name}
-              </div>
+              <div key={f.id} className="suggestion-item" onClick={() => selectFood(f)}>{f.name}</div>
             ))}
           </div>
         )}
@@ -169,8 +161,18 @@ export default function FoodDiary() {
             <p style={{fontSize:13, color:'#666'}}>{selectedFood.desc}</p>
             <div className="qty-row">
               <input type="number" placeholder="Qtà" value={qty} onChange={e => setQty(e.target.value)}/>
+              
+              {/* MODIFICA: UNITA' DI MISURA ESTESE */}
               <select value={unit} onChange={e => setUnit(e.target.value)}>
-                <option value="g">g</option><option value="ml">ml</option><option value="pz">pz</option>
+                <option value="g">g</option>
+                <option value="ml">ml</option>
+                <option value="pz">pz</option>
+                <option value="cucchiaio">cucchiaio</option>
+                <option value="cucchiai">cucchiai</option>
+                <option value="cucchiaino">cucchiaino</option>
+                <option value="cucchiaini">cucchiaini</option>
+                <option value="mestolo">mestolo</option>
+                <option value="mestoli">mestoli</option>
               </select>
             </div>
             <button onClick={addToSummary} style={{background: 'var(--accent)'}}>Aggiungi al Diario ↓</button>
@@ -178,57 +180,74 @@ export default function FoodDiary() {
         )}
       </div>
 
-      {/* AREA TESTO E NOTE */}
       <div className="section">
-        <textarea 
-            id="finalSummary" 
-            rows="8" 
-            value={summary}
-            onChange={(e) => { setSummary(e.target.value); updateDaily('dailyDiary', e.target.value); }}
-            placeholder="Il diario apparirà qui..."
-        ></textarea>
-        
+        <textarea id="finalSummary" rows="8" value={summary} onChange={(e) => { setSummary(e.target.value); updateDaily('dailyDiary', e.target.value); }} placeholder="Il diario apparirà qui..."></textarea>
         <div style={{display:'flex', gap:10, marginBottom: 20}}>
             <button onClick={copyToClipboard} style={{background: 'var(--text-main)'}}><Copy size={16}/> Copia</button>
             <button onClick={clearDiary} style={{background: 'var(--border)', color:'#555'}}><Trash2 size={16}/> Svuota</button>
         </div>
 
-        {/* NOTE PERSISTENTI */}
         <div className="notes-area">
-            <h4>📝 Note Personali (Non si cancellano)</h4>
-            <textarea 
-                value={notes} 
-                onChange={handleNoteChange} 
-                placeholder="Scrivi qui note fisse..."
-            ></textarea>
+            <h4>📝 Note Personali</h4>
+            <textarea value={notes} onChange={handleNoteChange} placeholder="Scrivi qui note fisse..."></textarea>
             <div style={{display:'flex', gap:10, marginTop:5}}>
                 <button onClick={addNoteToDiary} style={{background: '#f1c40f', color:'#333', fontSize:12}}>+ Al Diario</button>
-                <button onClick={() => { setNewName("Nota"); setNewDesc(notes); setShowDbManager(true); }} style={{background: 'var(--primary)', fontSize:12}}>+ Crea DB</button>
+                <button onClick={() => { setNewName("Nota"); setNewDesc(notes); setShowDbManager(true); document.getElementById('addForm').scrollIntoView(); }} style={{background: 'var(--primary)', fontSize:12}}>+ Crea DB</button>
             </div>
         </div>
       </div>
 
-      {/* GESTIONE DATABASE */}
       <div style={{textAlign:'center'}}>
         <button className="toggle-btn" onClick={() => setShowDbManager(!showDbManager)}>⚙️ Gestisci Database</button>
       </div>
 
       {showDbManager && (
         <div className="section" style={{background:'var(--bg-color)', padding:15, borderRadius:10, marginTop:10}}>
-            <button onClick={resetInitialDb} style={{background:'var(--danger)', fontSize:12, marginBottom:10}}>⚠️ Carica DB Base</button>
+            
+            {/* FORM DI AGGIUNTA/MODIFICA */}
+            <h4 style={{margin:'0 0 10px 0', color:'var(--text-main)'}}>
+                {editingId ? "Modifica Alimento" : "Aggiungi Nuovo"}
+            </h4>
             <div id="addForm">
                 <input type="text" placeholder="Nome" value={newName} onChange={e => setNewName(e.target.value)} />
                 <textarea rows="2" placeholder="Descrizione" value={newDesc} onChange={e => setNewDesc(e.target.value)} />
-                <button onClick={saveToDb}>Salva nel Cloud</button>
+                <div style={{display:'flex', gap:10}}>
+                    <button onClick={handleSaveToDb} style={{background: editingId ? 'var(--accent)' : 'var(--primary)'}}>
+                        {editingId ? "Aggiorna" : "Salva nel Cloud"}
+                    </button>
+                    {editingId && <button onClick={cancelEdit} style={{background:'var(--text-sec)'}}>Annulla</button>}
+                </div>
             </div>
-            <div style={{marginTop:15, maxHeight:200, overflowY:'auto'}}>
-                {foodDb.map(f => (
+
+            <hr style={{margin:'20px 0', borderTop:'1px solid #eee'}}/>
+
+            {/* BARRA DI RICERCA NEL DB MANAGER */}
+            <input 
+                type="text" 
+                placeholder="🔍 Cerca per modificare o eliminare..." 
+                value={dbSearch} 
+                onChange={e => setDbSearch(e.target.value)} 
+                style={{marginBottom:10, fontSize:13}}
+            />
+
+            <div style={{marginTop:5, maxHeight:250, overflowY:'auto'}}>
+                {filteredDbList.map(f => (
                     <div key={f.id} style={{display:'flex', justifyContent:'space-between', padding:10, borderBottom:'1px solid #eee', alignItems:'center'}}>
-                        <span style={{fontSize:12}}><b>{f.name}</b></span>
-                        <button onClick={() => deleteFromDb(f.id)} style={{background:'var(--danger)', width:'auto', padding:'5px 10px'}}><Trash2 size={14}/></button>
+                        <span style={{fontSize:12, flex:1}}><b>{f.name}</b></span>
+                        <div style={{display:'flex', gap:5}}>
+                            <button onClick={() => startEdit(f)} style={{background:'var(--accent)', width:'auto', padding:'5px 10px'}}>
+                                <Edit2 size={14}/>
+                            </button>
+                            <button onClick={() => deleteFromDb(f.id)} style={{background:'var(--danger)', width:'auto', padding:'5px 10px'}}>
+                                <Trash2 size={14}/>
+                            </button>
+                        </div>
                     </div>
                 ))}
+                {filteredDbList.length === 0 && <p style={{textAlign:'center', fontSize:12, color:'#999'}}>Nessun alimento trovato.</p>}
             </div>
+            
+            <button onClick={resetInitialDb} style={{background:'var(--border)', color:'#333', fontSize:11, marginTop:20}}>⚠️ Carica DB Base (Emergenza)</button>
         </div>
       )}
     </div>
