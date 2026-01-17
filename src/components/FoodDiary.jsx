@@ -7,7 +7,6 @@ const INITIAL_DB = [
     { name: "Yogurt Soia Bianco (Primia)", desc: "125g | 85 kcal, 3.6g Pro" },
     { name: "Mela", desc: "52 kcal/100g" },
     { name: "Pollo Petto", desc: "165 kcal/100g, 31g Pro" },
-    // ...
 ];
 
 export default function FoodDiary() {
@@ -27,8 +26,8 @@ export default function FoodDiary() {
   const [showDbManager, setShowDbManager] = useState(false);
 
   // DB Manager Inputs
-  const [dbSearch, setDbSearch] = useState(""); // Ricerca nel DB Manager
-  const [editingId, setEditingId] = useState(null); // ID dell'elemento in modifica
+  const [dbSearch, setDbSearch] = useState(""); 
+  const [editingId, setEditingId] = useState(null); 
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
 
@@ -85,17 +84,15 @@ export default function FoodDiary() {
     setSearchTerm(""); setSelectedFood(null); setQty("");
   };
 
-  // -- DB MANAGEMENT (Modifica e Ricerca) --
+  // -- DB MANAGEMENT --
   const handleSaveToDb = async () => {
     if (!newName || !newDesc) return alert("Compila i campi");
     
     if (editingId) {
-        // MODIFICA
         await updateDoc(doc(db, "foods", editingId), { name: newName, desc: newDesc });
         alert("Alimento aggiornato!");
         setEditingId(null);
     } else {
-        // NUOVO
         await addDoc(collection(db, "foods"), { name: newName, desc: newDesc });
         alert("Salvato!");
     }
@@ -106,7 +103,6 @@ export default function FoodDiary() {
       setNewName(food.name);
       setNewDesc(food.desc);
       setEditingId(food.id);
-      // Scroll to form (opzionale)
       document.getElementById('addForm').scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -123,12 +119,20 @@ export default function FoodDiary() {
     INITIAL_DB.forEach(async (item) => await addDoc(collection(db, "foods"), item));
   };
 
-  // Filtro lista DB per la gestione
   const filteredDbList = foodDb.filter(f => f.name.toLowerCase().includes(dbSearch.toLowerCase()));
 
   // -- NOTE --
   const handleNoteChange = (e) => { setNotes(e.target.value); updateDaily('notes', e.target.value); };
-  const addNoteToDiary = () => { setSummary(summary + `\n[NOTE]: ${notes}\n`); updateDaily('dailyDiary', summary + `\n[NOTE]: ${notes}\n`); };
+  
+  // MODIFICA QUI: Rimossa etichetta [NOTE]
+  const addNoteToDiary = () => { 
+      let text = summary;
+      if (text && !text.endsWith('\n')) text += '\n'; // Aggiungi a capo se serve
+      text += notes + '\n'; // Aggiungi solo il testo della nota
+      setSummary(text); 
+      updateDaily('dailyDiary', text); 
+  };
+  
   const copyToClipboard = () => { navigator.clipboard.writeText(summary); alert("Copiato!"); };
   const clearDiary = () => { if(confirm("Svuotare?")) { setSummary(""); updateDaily('dailyDiary', ""); } };
 
@@ -161,8 +165,6 @@ export default function FoodDiary() {
             <p style={{fontSize:13, color:'#666'}}>{selectedFood.desc}</p>
             <div className="qty-row">
               <input type="number" placeholder="Qtà" value={qty} onChange={e => setQty(e.target.value)}/>
-              
-              {/* MODIFICA: UNITA' DI MISURA ESTESE */}
               <select value={unit} onChange={e => setUnit(e.target.value)}>
                 <option value="g">g</option>
                 <option value="ml">ml</option>
@@ -221,7 +223,6 @@ export default function FoodDiary() {
 
             <hr style={{margin:'20px 0', borderTop:'1px solid #eee'}}/>
 
-            {/* BARRA DI RICERCA NEL DB MANAGER */}
             <input 
                 type="text" 
                 placeholder="🔍 Cerca per modificare o eliminare..." 
@@ -244,7 +245,6 @@ export default function FoodDiary() {
                         </div>
                     </div>
                 ))}
-                {filteredDbList.length === 0 && <p style={{textAlign:'center', fontSize:12, color:'#999'}}>Nessun alimento trovato.</p>}
             </div>
             
             <button onClick={resetInitialDb} style={{background:'var(--border)', color:'#333', fontSize:11, marginTop:20}}>⚠️ Carica DB Base (Emergenza)</button>
