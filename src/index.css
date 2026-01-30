@@ -1,23 +1,20 @@
-/* =========================================
-   1. VARIABILI E COLORI
-   ========================================= */
-   :root { 
-    --primary: #2ecc71; 
-    --bg-body: #eef2f5;       /* Sfondo esterno PC */
-    --bg-app: #ffffff;        /* Sfondo interno App */
+/* RESET GLOBALE */
+:root {
+    --primary: #2ecc71;
+    --bg-body: #eef2f5;
+    --bg-app: #ffffff;
     --text-main: #2c3e50;
     --text-sec: #7f8c8d;
     --border: #e0e0e0;
-    --accent: #3498db; 
-    --danger: #e74c3c; 
-    --meal-color: #f39c12; 
-    --water-blue: #2980b9; 
+    --accent: #3498db;
+    --danger: #e74c3c;
+    --meal-color: #f39c12;
+    --water-blue: #2980b9;
     --history-purple: #9b59b6;
     --note-yellow: #f1c40f;
     --nav-bg: rgba(255, 255, 255, 0.98);
     --toast-bg: rgba(0, 0, 0, 0.85);
     
-    /* Sudoku */
     --sudoku-border: #34495e;
     --cell-fixed: #ecf0f1;
     --cell-selected: #d6eaf8;
@@ -42,18 +39,17 @@
     --sudoku-border: #999;
   }
   
-  /* =========================================
-     2. LAYOUT GENERALE (FIX GRAFICA)
-     ========================================= */
-  * { box-sizing: border-box; }
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
   
-  body { 
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--bg-body); 
-    color: var(--text-main); 
-    margin: 0; 
+  body {
+    margin: 0;
     padding: 0;
-    /* Centra l'app sullo schermo */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-body);
+    color: var(--text-main);
     display: flex;
     justify-content: center;
     min-height: 100vh;
@@ -65,97 +61,96 @@
     justify-content: center;
   }
   
-  /* Il "telefono" virtuale */
+  /* CONTENITORE APP (SIMULA TELEFONO) */
   .app-container {
     width: 100%;
-    max-width: 600px; /* Larghezza massima */
-    background: var(--bg-app);
+    max-width: 600px; /* Larghezza massima su PC */
+    background-color: var(--bg-app);
     min-height: 100vh;
     position: relative;
-    box-shadow: 0 0 30px rgba(0,0,0,0.1); /* Ombra laterale su PC */
     display: flex;
     flex-direction: column;
-  }
-  
-  .content-area {
-    padding: 0 20px 100px 20px; /* Spazio sotto per la navbar */
-    flex: 1; /* Occupa tutto lo spazio disponibile */
-    overflow-y: auto; /* Abilita scroll se serve */
+    padding-bottom: 90px; /* Spazio per la navbar */
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
   }
   
   .header-actions {
+    padding: 15px 20px;
     display: flex;
     justify-content: flex-end;
-    padding: 15px 20px 0 20px;
   }
   
-  /* =========================================
-     3. ELEMENTI UI (Bottoni, Input)
-     ========================================= */
-  h1 { 
-    text-align: center; 
-    color: var(--primary); 
-    margin: 10px 0 25px 0; 
-    font-size: 1.8rem;
-    font-weight: 800;
+  .content-area {
+    padding: 0 20px;
+    flex: 1;
   }
   
-  .section { margin-bottom: 25px; }
-  
-  input, textarea, select { 
-    width: 100%; padding: 14px; margin: 6px 0; 
-    border: 1px solid var(--border); border-radius: 12px; 
-    font-size: 16px; 
-    background: var(--bg-app); color: var(--text-main);
-    transition: border 0.2s;
-  }
-  input:focus, textarea:focus, select:focus {
-    outline: none; border-color: var(--primary);
+  /* TITOLI E TESTI */
+  h1 {
+    text-align: center;
+    color: var(--primary);
+    margin: 0 0 20px 0;
+    font-size: 2rem;
   }
   
-  button { 
-    padding: 14px; background-color: var(--primary); color: white; 
-    border: none; border-radius: 12px; cursor: pointer; 
-    font-weight: 600; margin: 5px 0; width: 100%; font-size: 15px;
-    display: flex; justify-content: center; align-items: center; gap: 8px;
-    transition: transform 0.1s;
-  }
-  button:active { transform: scale(0.98); }
-  
-  .icon-btn {
-    background: transparent; border: 1px solid var(--border); 
-    color: var(--text-main); width: 40px; height: 40px; 
-    border-radius: 50%; padding: 0; margin: 0;
+  /* INPUT E SELECT */
+  input, select, textarea {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-app);
+    color: var(--text-main);
+    font-size: 16px;
+    display: block;
   }
   
-  .toggle-btn {
-    background: none; color: var(--text-sec); 
-    text-decoration: underline; font-size: 13px; margin-top: 15px;
+  /* BOTTONI */
+  button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    transition: opacity 0.2s;
   }
+  button:active { opacity: 0.7; }
   
-  .hidden { display: none !important; }
-  
-  /* =========================================
-     4. NAVBAR FISSA IN BASSO
-     ========================================= */
-  .bottom-nav { 
-    position: fixed; bottom: 0; 
-    left: 0; right: 0;
+  /* NAVBAR FISSA IN BASSO */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     margin: 0 auto;
-    max-width: 600px; /* Non uscire dai bordi su PC */
-    background: var(--nav-bg); 
-    backdrop-filter: blur(10px);
-    display: flex; justify-content: space-around; 
-    padding: 10px 0 25px 0; /* Extra spazio per iPhone moderni */
+    max-width: 600px;
+    background-color: var(--nav-bg);
     border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0 25px 0; /* Extra padding per iPhone moderni */
     z-index: 1000;
+    backdrop-filter: blur(10px);
   }
   
-  .nav-item { 
-    background: none; border: none; color: var(--text-sec); 
-    font-size: 10px; font-weight: 600; 
-    display: flex; flex-direction: column; align-items: center; 
-    width: 25%; margin: 0;
+  .nav-item {
+    background: none;
+    color: var(--text-sec);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 10px;
+    width: 25%;
+    margin: 0;
+    padding: 5px;
   }
   
   .nav-item.active { color: var(--primary); }
@@ -163,133 +158,115 @@
   .nav-item.active-history { color: var(--history-purple); }
   .nav-item.active-game { color: #4a90e2; }
   
-  /* =========================================
-     5. STILI COMPONENTI (Diario, Acqua, Ecc)
-     ========================================= */
-  
-  /* Diario */
-  .meal-selector { border: 2px solid var(--meal-color); color: var(--meal-color); font-weight: bold; }
-  .qty-row { display: flex; gap: 10px; }
-  .qty-row input { flex: 2; }
-  .qty-row select { flex: 1; }
-  
-  #suggestions { 
-    background: var(--bg-app); border: 1px solid var(--border); 
-    border-radius: 12px; max-height: 200px; overflow-y: auto; 
-    position: absolute; width: 100%; z-index: 500; top: 55px; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-  }
-  .suggestion-item { padding: 14px; cursor: pointer; border-bottom: 1px solid var(--border); }
-  .suggestion-item:hover { background-color: var(--bg-body); }
-  
-  #resultArea {
-    margin-top: 15px; padding: 15px; 
-    background: var(--bg-app); 
-    border-left: 4px solid var(--primary); 
-    border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  /* COMPONENTI SPECIFICI */
+  .meal-selector {
+    border: 2px solid var(--meal-color);
+    color: var(--meal-color);
+    font-weight: bold;
   }
   
-  .notes-area { 
-    background: rgba(241, 196, 15, 0.1); 
-    border: 1px solid var(--note-yellow); 
-    padding: 15px; border-radius: 12px; margin-top: 25px; 
+  .qty-row {
+    display: flex;
+    gap: 10px;
   }
-  .notes-area h4 { margin: 0 0 10px 0; color: var(--note-yellow); font-size: 14px; }
-  .notes-area textarea { border: none; background: transparent; min-height: 60px; font-style: italic; }
   
-  /* Acqua */
+  .notes-area {
+    background: rgba(241, 196, 15, 0.1);
+    border: 1px solid var(--note-yellow);
+    padding: 15px;
+    border-radius: 12px;
+    margin-top: 20px;
+  }
+  .notes-area textarea {
+    border: none;
+    background: transparent;
+  }
+  
+  /* ACQUA */
   .water-card {
-    position: relative; overflow: hidden;
-    border: 2px solid var(--water-blue); border-radius: 20px;
-    padding: 40px 20px; text-align: center; margin-bottom: 20px;
-    background: var(--bg-app);
+    position: relative;
+    border: 2px solid var(--water-blue);
+    border-radius: 20px;
+    padding: 40px 0;
+    text-align: center;
+    margin-bottom: 20px;
+    overflow: hidden;
   }
   .water-fill {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    background: rgba(52, 152, 219, 0.15);
-    transition: height 0.5s ease; z-index: 0;
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(52, 152, 219, 0.2);
+    transition: height 0.5s ease;
+    z-index: 0;
   }
   .water-content { position: relative; z-index: 1; }
-  .water-content h2 { font-size: 3.5rem; margin: 0; color: var(--water-blue); line-height: 1; }
+  .water-content h2 { font-size: 3.5rem; margin: 0; color: var(--water-blue); }
   
-  .grid-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .btn-water { background: var(--water-blue); font-size: 14px; box-shadow: 0 4px 6px rgba(41, 128, 185, 0.2); }
-  .btn-reset { background: var(--text-sec); margin-top: 15px;}
+  .grid-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .btn-water { background-color: var(--water-blue); color: white; }
   
-  /* Storico */
-  .history-card { 
-    background: var(--bg-app); border: 1px solid var(--border); 
-    padding: 15px; border-radius: 12px; margin-bottom: 15px; 
+  /* STORICO */
+  .history-card {
+    background: var(--bg-app);
+    border: 1px solid var(--border);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
     border-left: 5px solid var(--history-purple);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
   }
-  .history-date { 
-    display: flex; justify-content: space-between; align-items: center;
-    font-weight: 700; color: var(--history-purple); 
-    border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 8px; 
-  }
-  .history-water { color: var(--water-blue); font-weight: 700; font-size: 13px; }
-  .history-meals { font-size: 13px; white-space: pre-wrap; margin-top: 8px; line-height: 1.5; color: var(--text-main); }
   
-  /* Sudoku */
-  .fade-in { animation: fadeIn 0.3s ease-in; }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  
-  #sudoku-grid { 
-    display: grid; 
-    grid-template-columns: repeat(9, 1fr); 
-    gap: 1px; 
-    background: var(--sudoku-border); 
+  /* SUDOKU */
+  #sudoku-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 1px;
+    background: var(--sudoku-border);
     border: 2px solid var(--sudoku-border);
-    margin: 20px auto; 
-    max-width: 350px;
+    margin: 15px auto;
     aspect-ratio: 1/1;
+    max-width: 350px;
   }
-  
   .cell {
-    background: var(--bg-app); 
+    background: var(--bg-app);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem; cursor: pointer; color: var(--text-main);
+    font-size: 1.2rem; cursor: pointer;
   }
-  
   .cell:nth-child(3n) { border-right: 2px solid var(--sudoku-border); }
   .cell:nth-child(9n) { border-right: none; }
-  .cell:nth-child(n+19):nth-child(-n+27), 
+  .cell:nth-child(n+19):nth-child(-n+27),
   .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid var(--sudoku-border); }
-  
-  .cell.fixed { background: var(--cell-fixed); font-weight: 700; }
   .cell.selected { background: var(--accent) !important; color: white; }
-  .cell.highlight { background: var(--cell-highlight); }
+  .sudoku-controls { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 10px; }
   
-  .sudoku-controls { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-width: 350px; margin: 15px auto; }
-  .btn-digit { padding: 10px; font-size: 1.2rem; background-color: #4a90e2; }
-  
-  /* Toast Notification (Minimal) */
+  /* TOAST */
   #toast {
-      visibility: hidden;
-      min-width: auto;
-      background-color: var(--toast-bg);
-      color: #fff;
-      text-align: center;
-      border-radius: 50px;
-      padding: 8px 16px;
-      position: fixed;
-      z-index: 3000;
-      left: 50%;
-      top: 20px;
-      transform: translateX(-50%);
-      font-size: 13px;
-      font-weight: 600;
-      opacity: 0;
-      transition: opacity 0.3s, top 0.3s;
-      backdrop-filter: blur(5px);
-      pointer-events: none;
+    visibility: hidden;
+    background-color: var(--toast-bg);
+    color: white;
+    text-align: center;
+    border-radius: 50px;
+    padding: 10px 20px;
+    position: fixed;
+    z-index: 3000;
+    left: 50%;
+    top: 20px;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s, top 0.3s;
   }
-  [data-theme="dark"] #toast { color: #000; }
+  #toast.show { visibility: visible; opacity: 1; top: 40px; }
   
-  #toast.show {
-      visibility: visible;
-      opacity: 1;
-      top: 30px;
+  .icon-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-main);
+    padding: 0;
+    margin: 0;
   }
   
