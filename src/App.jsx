@@ -3,52 +3,31 @@ import WaterTracker from './components/WaterTracker';
 import FoodDiary from './components/FoodDiary';
 import History from './components/History';
 import Sudoku from './components/Sudoku';
-import { Droplets, Utensils, BookOpen, Gamepad2, Moon, Sun, Heart } from 'lucide-react';
+import { Droplets, Utensils, BookOpen, Gamepad2, Moon, Sun } from 'lucide-react';
 import './index.css';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('food');
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-  
-  // NUOVO: Stato per il popup di benvenuto
-  const [showWelcome, setShowWelcome] = useState(true);
 
+  // Gestione Tema
   useEffect(() => {
     document.body.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // NUOVO: Effetto per nascondere il popup automaticamente dopo 4 secondi
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowWelcome(false);
-    }, 4000); // 4000 ms = 4 secondi
-    return () => clearTimeout(timer);
-  }, []);
-
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
   return (
     <div className="app-container">
-      
-      {/* --- POPUP IAGO --- */}
-      {showWelcome && (
-        <div className="welcome-overlay" onClick={() => setShowWelcome(false)}>
-          <div className="welcome-box">
-            <Heart size={50} color="#e74c3c" fill="#e74c3c" style={{marginBottom:10}} />
-            <h2>Ciao Iago!</h2>
-            <p>Ti vogliamo tanto<br/>tanto bene ❤️</p>
-          </div>
-        </div>
-      )}
-      {/* ------------------ */}
-
+      {/* Header con bottone tema */}
       <div className="header-actions">
         <button onClick={toggleTheme} className="icon-btn" title="Cambia tema">
           {theme === 'light' ? <Moon size={20}/> : <Sun size={20}/>}
         </button>
       </div>
 
+      {/* Area Contenuto */}
       <div className="content-area">
         {activeTab === 'food' && <FoodDiary />}
         {activeTab === 'water' && <WaterTracker />}
@@ -56,6 +35,7 @@ export default function App() {
         {activeTab === 'game' && <Sudoku />}
       </div>
 
+      {/* Navigation Bar in basso */}
       <nav className="bottom-nav">
         <NavButton id="food" icon={<Utensils size={20}/>} label="Diario" active={activeTab} set={setActiveTab} />
         <NavButton id="water" icon={<Droplets size={20}/>} label="Acqua" active={activeTab} set={setActiveTab} />
