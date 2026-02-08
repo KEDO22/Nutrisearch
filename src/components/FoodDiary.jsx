@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot, addDoc, doc, deleteDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { Search, Plus, Trash2, Copy, Save, Edit2 } from 'lucide-react';
+import { Search, Trash2, Copy, Edit2, RotateCcw } from 'lucide-react';
 
 const INITIAL_DB = [
     { name: "Yogurt Soia Bianco (Primia)", desc: "125g | 85 kcal, 3.6g Pro" },
@@ -31,6 +31,9 @@ export default function FoodDiary() {
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
 
+  // STATO PER L'UNDO (ANNULLA)
+  const [undoData, setUndoData] = useState(null); 
+
   // 1. Carica Database Alimenti
   useEffect(() => {
     const q = query(collection(db, "foods"), orderBy("name"));
@@ -46,14 +49,43 @@ export default function FoodDiary() {
     const unsub = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setSummary(data.dailyDiary || "");
+        // Carichiamo solo se non stiamo digitando (per evitare conflitti live)
+        if (document.activeElement !== document.getElementById('finalSummary')) {
+            setSummary(data.dailyDiary || "");
+        }
         setNotes(data.notes || "");
       }
     });
     return () => unsub();
   }, []);
 
-  // -- LOGICA RICERCA DIARIO --
+  // --- LOGICA UNDO ---
+  const registerUndo = (type, payload) => {
+      setUndoData({ type, payload });
+      // Il tasto Undo rimane visibile per 15 secondi, poi sparisce per pulizia
+      setTimeout(() => setUndoData(null), 15000);
+  };
+
+  const handleUndo = async () => {
+      if (!undoData) return;
+
+      if (undoData.type === 'DB_DELETE') {
+          await addDoc(collection(db, "foods"), undoData.payload);
+          alert("Alimento ripristinato!");
+      } 
+      else if (undoData.type === 'DIARY_RESTORE') {
+          // Ripristina il testo del diario com'era prima
+          setSummary(undoData.payload);
+          updateDaily('dailyDiary', undoData.payload);
+          // Feedback visivo (opzionale)
+          const toast = document.getElementById('toast');
+          if(toast) { toast.innerText = "Annullato!"; toast.className = "show"; setTimeout(()=>toast.className="", 1000); }
+      }
+
+      setUndoData(null); // Nascondi tasto dopo l'uso
+  };
+
+  // --- LOGICA RICERCA DIARIO ---
   const handleSearch = (e) => {
     const val = e.target.value;
     setSearchTerm(val);
@@ -75,6 +107,10 @@ export default function FoodDiary() {
 
   const addToSummary = () => {
     if (!selectedFood) return;
+    
+    // 1. SALVA LO STATO CORRENTE PER L'UNDO
+    registerUndo('DIARY_RESTORE', summary);
+
     let text = summary;
     if (!text.includes(`[${meal}]`)) text += (text ? "\n\n" : "") + `[${meal}]\n`;
     text += `• ${qty ? qty + ' ' + unit + ' di ' : ''}${selectedFood.name} | ${selectedFood.desc}\n`;
@@ -111,7 +147,13 @@ export default function FoodDiary() {
   };
 
   const deleteFromDb = async (id) => {
-    if(confirm("Eliminare definitivamente?")) await deleteDoc(doc(db, "foods", id));
+    const itemToDelete = foodDb.find(f => f.id === id);
+    if(confirm("Eliminare definitivamente?")) {
+        // SALVA PER UNDO
+        registerUndo('DB_DELETE', { name: itemToDelete.name, desc: itemToDelete.desc });
+        
+        await deleteDoc(doc(db, "foods", id));
+    }
   };
 
   const resetInitialDb = async () => {
@@ -125,6 +167,9 @@ export default function FoodDiary() {
   const handleNoteChange = (e) => { setNotes(e.target.value); updateDaily('notes', e.target.value); };
   
   const addNoteToDiary = () => { 
+      // SALVA PER UNDO
+      registerUndo('DIARY_RESTORE', summary);
+
       let text = summary;
       if (text && !text.endsWith('\n')) text += '\n'; 
       text += notes + '\n'; 
@@ -132,7 +177,6 @@ export default function FoodDiary() {
       updateDaily('dailyDiary', text); 
   };
 
-  // NUOVA FUNZIONE: CANCELLA NOTE
   const clearNotes = () => {
       if(confirm("Cancellare le note personali?")) {
           setNotes("");
@@ -141,11 +185,43 @@ export default function FoodDiary() {
   };
   
   const copyToClipboard = () => { navigator.clipboard.writeText(summary); alert("Copiato!"); };
-  const clearDiary = () => { if(confirm("Svuotare?")) { setSummary(""); updateDaily('dailyDiary', ""); } };
+  
+  const clearDiary = () => { 
+      if(summary.length > 0 && confirm("Svuotare?")) { 
+          // SALVA PER UNDO
+          registerUndo('DIARY_RESTORE', summary);
+
+          setSummary(""); 
+          updateDaily('dailyDiary', "");
+      } 
+  };
 
   return (
     <div className="fade-in">
       <h1>NutriSearch 🍎</h1>
+
+      {/* TASTO UNDO NELLA HEADER (Fisso in alto a destra) */}
+      {undoData && (
+          <button 
+            onClick={handleUndo} 
+            className="icon-btn"
+            title="Annulla ultima azione"
+            style={{
+                position: 'fixed', 
+                top: 15, 
+                right: 70, // 20px padding + 40px btn tema + 10px gap
+                zIndex: 5000,
+                width: 40, height: 40,
+                background: 'var(--bg-app)',
+                borderColor: 'var(--text-main)',
+                color: 'var(--text-main)',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                animation: 'popIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+            }}
+          >
+              <RotateCcw size={20} strokeWidth={2.5} />
+          </button>
+      )}
 
       <div className="section">
         <select value={meal} onChange={(e) => setMeal(e.target.value)} className="meal-selector">
@@ -190,7 +266,18 @@ export default function FoodDiary() {
       </div>
 
       <div className="section">
-        <textarea id="finalSummary" rows="8" value={summary} onChange={(e) => { setSummary(e.target.value); updateDaily('dailyDiary', e.target.value); }} placeholder="Il diario apparirà qui..."></textarea>
+        <textarea 
+            id="finalSummary" 
+            rows="8" 
+            value={summary} 
+            onChange={(e) => { 
+                // Salviamo lo stato ogni volta che l'utente inizia a modificare manualmente per poter fare undo se cancella tutto per sbaglio
+                // (Nota: per modifiche carattere per carattere è complesso, qui gestiamo le azioni macro)
+                setSummary(e.target.value); 
+                updateDaily('dailyDiary', e.target.value); 
+            }} 
+            placeholder="Il diario apparirà qui..."
+        ></textarea>
         <div style={{display:'flex', gap:10, marginBottom: 20}}>
             <button onClick={copyToClipboard} style={{background: 'var(--text-main)'}}><Copy size={16}/> Copia</button>
             <button onClick={clearDiary} style={{background: 'var(--border)', color:'#555'}}><Trash2 size={16}/> Svuota</button>
@@ -202,8 +289,6 @@ export default function FoodDiary() {
             <div style={{display:'flex', gap:10, marginTop:5}}>
                 <button onClick={addNoteToDiary} style={{background: '#f1c40f', color:'#333', fontSize:12}}>+ Al Diario</button>
                 <button onClick={() => { setNewName("Nota"); setNewDesc(notes); setShowDbManager(true); document.getElementById('addForm').scrollIntoView(); }} style={{background: 'var(--primary)', fontSize:12}}>+ Crea DB</button>
-                
-                {/* TASTO CANCELLA NOTE AGGIUNTO */}
                 <button onClick={clearNotes} style={{background: 'var(--border)', color:'#555', width:'auto', padding:'0 10px'}} title="Cancella note">
                     <Trash2 size={14}/>
                 </button>
@@ -216,7 +301,7 @@ export default function FoodDiary() {
       </div>
 
       {showDbManager && (
-        <div className="section" style={{background:'var(--bg-color)', padding:15, borderRadius:10, marginTop:10}}>
+        <div className="section" style={{background:'var(--bg-app)', padding:15, borderRadius:10, marginTop:10, border:'1px solid var(--border)'}}>
             
             <h4 style={{margin:'0 0 10px 0', color:'var(--text-main)'}}>
                 {editingId ? "Modifica Alimento" : "Aggiungi Nuovo"}
@@ -256,7 +341,6 @@ export default function FoodDiary() {
                         </div>
                     </div>
                 ))}
-                {filteredDbList.length === 0 && <p style={{textAlign:'center', fontSize:12, color:'#999'}}>Nessun alimento trovato.</p>}
             </div>
             
             <button onClick={resetInitialDb} style={{background:'var(--border)', color:'#333', fontSize:11, marginTop:20}}>⚠️ Carica DB Base (Emergenza)</button>
