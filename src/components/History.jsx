@@ -49,31 +49,42 @@ export default function History() {
     if(confirm("Eliminare questa scheda?")) await deleteDoc(doc(db, "history", id));
   };
 
+  // --- MODIFICA QUI ---
   const copyEntry = (entry) => {
-    // MODIFICA: Rimossa la data dall'intestazione, lasciato solo il contenuto utile
-    const text = `ACQUA: ${entry.water}ml\n\n--- PASTI ---\n${entry.meals}`;
+    // Ora copia SOLO il contenuto dei pasti, pulito.
+    const text = entry.meals;
     navigator.clipboard.writeText(text);
-    alert("Scheda copiata (senza data)!");
+    
+    // Piccolo feedback (puoi usare showToast se l'hai implementato globalmente, altrimenti alert)
+    const toast = document.getElementById('toast');
+    if (toast) {
+        toast.innerText = "Pasti copiati!";
+        toast.className = "show";
+        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 1500);
+    } else {
+        alert("Copiato!");
+    }
   };
+  // -------------------
 
   return (
     <div className="fade-in">
         <h1 style={{color: 'var(--history-purple)'}}>Storico 📖</h1>
         
-        <div style={{background: 'var(--bg-color)', padding: 15, borderRadius: 12, marginBottom: 20, border: '1px solid var(--border)'}}>
+        <div style={{background: 'var(--bg-app)', padding: 15, borderRadius: 12, marginBottom: 20, border: '1px solid var(--border)'}}>
             <button onClick={archiveDay} style={{background: 'var(--history-purple)', display:'flex', alignItems:'center', justifyContent:'center', gap:10}}>
                 <Archive size={18}/> Salva e Chiudi Giornata
             </button>
         </div>
 
         <div>
-            {history.length === 0 && <p style={{textAlign:'center', color:'#999'}}>Nessuna storia salvata.</p>}
+            {history.length === 0 && <p style={{textAlign:'center', color:'var(--text-sec)'}}>Nessuna storia salvata.</p>}
             {history.map(h => (
                 <div key={h.id} className="history-card">
                     <div className="history-date">
                         {h.date}
-                        <button onClick={() => copyEntry(h)} style={{background:'var(--accent)', width:'auto', padding:'2px 8px', fontSize:10, borderRadius:4, display:'inline-flex', alignItems:'center', gap:4}}>
-                            <Copy size={10}/> Copia
+                        <button onClick={() => copyEntry(h)} style={{background:'var(--accent)', width:'auto', padding:'4px 8px', fontSize:11, borderRadius:6, display:'inline-flex', alignItems:'center', gap:4}}>
+                            <Copy size={12}/> Copia Pasti
                         </button>
                     </div>
                     <div className="history-water">💧 {h.water}ml bevuti</div>
